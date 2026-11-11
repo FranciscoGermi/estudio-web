@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maxhs Arquitectura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --papel: #fdfdfb;
+  --tinta: #13150f;
+  --cinta: #ffff8d;
+  --sombra: #0b0c08;
+  --noche: #103768;
+}
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--sombra); }
+body { font-family: Archivo, "Helvetica Neue", Arial, sans-serif; color: var(--tinta); background: var(--sombra); overflow-x: hidden; }
+img { display: block; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--cinta); outline-offset: 3px; }
+
+.escenario { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--sombra); }
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.firma { position: absolute; z-index: 3; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; transform-origin: 50% 50%; }
+.firma { --birome: var(--tinta); }
+.firma .pluma { fill: var(--birome); stroke: #8d8e92; stroke-width: 0.7; paint-order: stroke; stroke-linejoin: round; }
+.firma .fuga { fill: none; stroke: var(--birome); stroke-width: 0.9; stroke-linecap: round; opacity: 0.5; }.firma .cara { fill: var(--cinta); }
+.firma .canto { fill: #feffd3; }
+.firma .eje { fill: none; stroke: none; }
+.escena { position: absolute; inset: 0; display: none; }
+.escena.viva { display: block; }
+
+/* obra detrás, papel delante con el hueco del croquis */
+.obra { position: absolute; inset: 0; display: flex; background: var(--sombra); transition: filter 0.9s ease; will-change: transform; }
+.obra img { flex: 1 1 0; min-width: 0; height: 100%; object-fit: cover; }
+.obra.lejos { filter: brightness(0.28) saturate(0.7); }
+.velo { position: absolute; inset: 0; background: var(--papel); }
+.papel, .trazo { position: absolute; inset: 0; --r: 0px; --cx: 50%; --cy: 50%;
+  --abertura: radial-gradient(circle at var(--cx) var(--cy), #000 var(--r), transparent calc(var(--r) * 1.22));
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.papel { background: var(--papel);
+  -webkit-mask-image: linear-gradient(#000, #000), var(--hueco), var(--abertura); mask-image: linear-gradient(#000, #000), var(--hueco), var(--abertura);
+  -webkit-mask-composite: source-out, source-over, source-over; mask-composite: subtract, add, add; }
+.trazo { pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000, #000), var(--abertura); mask-image: linear-gradient(#000, #000), var(--abertura);
+  -webkit-mask-composite: source-out, source-over; mask-composite: subtract, add; }
+.hoja { position: absolute; }
+.hoja > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.rotulo { position: absolute; color: var(--papel); opacity: 0; max-width: min(88vw, 15em); font-size: clamp(2.6rem, 8.4vw, 8.4rem); text-shadow: 0 2px 40px rgba(0, 0, 0, 0.55); }
+.rotulo h2 { font-stretch: 62%; font-weight: 800; font-size: 1em; line-height: 0.9; letter-spacing: -0.012em; text-wrap: balance; }
+.rotulo p { font-size: clamp(0.95rem, 1.25vw, 1.15rem); font-weight: 400; margin-top: 1.1em; max-width: 26em; line-height: 1.45; }
+.rotulo.ab-iz { left: clamp(20px, 5vw, 72px); bottom: clamp(70px, 12vh, 120px); }
+.rotulo.ar-de { right: clamp(20px, 5vw, 72px); top: clamp(28px, 9vh, 96px); text-align: right; }
+.rotulo.ar-de p { margin-left: auto; }
+.rotulo.ar-iz { left: clamp(20px, 5vw, 72px); top: clamp(28px, 9vh, 96px); }
+.rotulo.ab-de { right: clamp(20px, 5vw, 72px); bottom: clamp(70px, 12vh, 120px); text-align: right; }
+.rotulo.ab-de p { margin-left: auto; }
+
+.tira { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 7vw; padding: 0 4vw; will-change: transform; visibility: hidden; }
+.tira img { height: 62vh; width: auto; max-width: 92vw; object-fit: cover; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }
+.tira img:nth-child(3n+1) { height: 76vh; align-self: flex-end; margin-bottom: 9vh; }
+.tira img:nth-child(3n+2) { height: 52vh; align-self: flex-start; margin-top: 8vh; }
+.tira img:nth-child(3n) { height: 68vh; }
+
+/* índice dibujado: cada obra es su croquis */
+.indice { position: fixed; z-index: 5; right: clamp(12px, 3vw, 40px); bottom: clamp(10px, 2.4vh, 24px); display: flex; gap: 2px; background: var(--papel); padding: 5px 8px; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+.indice.visible { opacity: 1; pointer-events: auto; }
+.indice button { appearance: none; border: 0; background: none; padding: 5px 9px 7px; cursor: pointer; border-bottom: 3px solid transparent; }
+.indice button img { height: 26px; width: auto; }
+.indice button[aria-current="true"] { border-bottom-color: var(--cinta); background: #f4f4e2; }
+.indice button:hover { background: #f4f4e2; }
+
+/* Algo Complejo, de noche */
+/* toda la pantalla es la entrada al 3D: una luz recorre la obra a oscuras y lleva la invitación */
+.pausa { position: relative; background: #03060c; }
+.noche { position: sticky; top: 0; display: block; height: 100vh; height: 100svh; overflow: hidden; background: #03060c; color: var(--papel); text-decoration: none; --mx: 50vw; --my: 42vh; --rl: 36vmin; }
+.noche img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.noche .fondo { filter: brightness(0.2) saturate(0.7); }
+.noche .luz { -webkit-mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0, #000 calc(var(--rl) * 0.4), transparent var(--rl)); mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0, #000 calc(var(--rl) * 0.4), transparent var(--rl)); }
+.noche .titulo { position: absolute; left: clamp(20px, 5vw, 72px); bottom: clamp(28px, 8vh, 84px); display: grid; gap: 0.9rem; }
+.noche .titulo strong { font-stretch: 62%; font-weight: 800; font-size: clamp(2.6rem, 8.4vw, 8.4rem); line-height: 0.9; }
+.noche .llamado { position: absolute; left: var(--lx, 50vw); top: var(--ly, 60vh); transform: translate(-50%, 0); background: var(--cinta); color: var(--tinta); padding: 0.85em 1.5em 0.9em; font-weight: 700; font-size: clamp(1.05rem, 1.7vw, 1.5rem); white-space: nowrap; text-align: center; box-shadow: 0 0 60px rgba(255, 255, 141, 0.35); }
+.noche .llamado small { display: block; font-weight: 400; font-size: 0.68em; margin-top: 0.25em; }
+.noche:hover .llamado, .noche:focus-visible .llamado { background: var(--papel); }
+
+/* cierre: los croquis que todavía no tienen obra en la página */
+.mesa { position: relative; background: var(--papel); height: 100vh; height: 100svh; display: grid; grid-template-rows: minmax(0, 1fr) auto; padding-bottom: clamp(18px, 4vh, 40px); overflow: hidden; }
+.mesa figure { margin: 0; min-height: 0; }
+.mesa svg { display: block; width: 100%; height: 100%; }
+.mesa svg path { fill: none; stroke: var(--tinta); stroke-linecap: round; }
+.mesa svg path.manto { stroke: none; }
+.mesa .datos { margin: 1vh clamp(20px, 5vw, 72px) 0; display: flex; flex-wrap: wrap; gap: 2em 5em; align-items: end; justify-content: space-between; }
+.mesa .datos p:first-child { font-stretch: 62%; font-weight: 800; font-size: clamp(2rem, 5vw, 4.4rem); line-height: 0.95; }
+.mesa .datos a { font-weight: 500; text-underline-offset: 0.25em; margin-left: 1.4em; }
+.mesa .datos a:first-child { margin-left: 0; }
+
+@media (max-width: 720px) {
+  .obra img + img { display: none; }
+  .entrar { display: none; }
+  .indice button img { height: 20px; }
+  .indice button { padding: 4px 5px 6px; }
+}
+</style>
+</head>
+<body>
+
+<main id="recorrido" aria-label="Recorrido por las obras">
+  <h1 class="oculto">Maxhs Arquitectura</h1>
+  <div class="escenario" id="escenario">
+    <svg class="firma" id="firma" viewBox="-40 -30 1053 767" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Croquis del estudio: un edificio largo y bajo con un árbol detrás; sobre su franja amarilla está escrito MA/X/HS">
+      <mask id="entrada-trazo" maskUnits="userSpaceOnUse" x="0" y="0" width="973" height="707"></mask>
+      <g class="capa" id="entrada-color">
+        <image href="material/umbral/nave-colores.svg?v=3" width="973" height="707"/>
+      </g>
+      <image id="entrada-tinta" href="material/umbral/nave-tinta.svg?v=3" width="973" height="707" mask="url(#entrada-trazo)"/>
+      <g class="letras">
+      <path class="eje" d="M4 1Q1.5 52 5 100"/>
+      <path class="eje" d="M3 3Q18 30 29 66"/>
+      <path class="eje" d="M53 0Q39 38 27 70"/>
+      <path class="eje" d="M51.5 2Q55 50 52 100"/>
+      <path class="eje" d="M87.5 1Q73 54 64 100"/>
+      <path class="eje" d="M85 0Q99 46 108 100"/>
+      <path class="eje" d="M68 73Q86 66 105 67"/>
+      <path class="eje" d="M150 0Q138 54 120 100"/>
+      <path class="eje" d="M162 0Q180 54 204 100"/>
+      <path class="eje" d="M204 1Q186 45 162 100"/>
+      <path class="eje" d="M246 0Q230 48 216 100"/>
+      <path class="eje" d="M258 0Q255.5 50 259 100"/>
+      <path class="eje" d="M298 1Q301 48 297 100"/>
+      <path class="eje" d="M255 45Q277 38 301 40"/>
+      <path class="eje" d="M349 21C346 5 332 -2 321 2C306 8 307 30 321 41C337 53 355 57 352 80C349 100 323 104 310 95C305 91 303 87 301 81"/>
+      </g>
+    </svg>
+  </div>
+</main>
+
+<nav class="indice" id="indice" aria-label="Obras, por su croquis"></nav>
+
+<div class="pausa" id="pausa">
+<a class="noche" id="noche" href="algo-complejo/" target="_blank" rel="noopener" aria-label="Algo Complejo, complejo interreligioso en Ciudad Verde: recorrer el modelo 3D de noche">
+  <img class="fondo" src="material/fotos/algo-noche.jpg" alt="" loading="lazy">
+  <img class="luz" src="material/fotos/algo-noche.jpg" alt="La cáscara de hormigón de Algo Complejo iluminada de noche sobre el montículo de pasto" loading="lazy">
+  <span class="titulo"><strong>Algo Complejo</strong><span>Complejo interreligioso, Ciudad Verde</span></span>
+  <span class="llamado">Recorrer el modelo 3D<small>de noche, en su lugar</small></span>
+</a>
+</div>
+
+<section class="mesa" id="estudio">
+  <figure id="mesa" data-alt="Croquis de una persona frente a un espacio en perspectiva, con un árbol al fondo; la franja de luz amarilla y las líneas de fuga siguen más allá de la hoja"></figure>
+  <div class="datos">
+    <p>Maxhs Arquitectura</p>
+    <p><a href="https://www.behance.net/maxhsarquite">Behance</a><a href="https://www.instagram.com/maxhs.arquitectura/">Instagram</a></p>
+  </div>
+</section>
+
+<script>
+// ---- números abiertos: cuánto scroll dura cada cosa y cómo se reparte ----
+const LARGO_ARCO = 0;        // sin portada: la página abre en el primer croquis
+const LARGO_ESCENA = 5;   // pantallas de scroll de cada obra
+const SUAVIDAD = 0.11;       // 1 = pegado al scroll; menos = más flotado
+const VERSION = 4;          // se sube al regenerar el material, para que el navegador no use el anterior
+const TRAZO_ANCHO = 0.011;   // ancho de la máscara que descubre la tinta, en partes del ancho del croquis
+const TRAZO_PAUSA = 0.012;   // pausa entre un trazo y el siguiente (la mano que se levanta), en la misma unidad
+const FIRMA_GROSOR = 2.3;  // grosor de la línea del nombre, en píxeles del croquis (su tinta mide de 2 a 4)
+const FIRMA_PULSO = 0.08;  // cuánto engorda y afina la línea a lo largo, como la del croquis (0 = pareja)
+const FIRMA_APOYO = 0.55;  // cuánto más gruesa es la gota donde se apoya la lapicera
+const FIRMA_SALIDA = 11;   // largo de la punta en que se afina la línea al levantar (alto de letra = 100)
+const FIRMA_TEMBLOR = 0;   // cuánto se aparta la línea de su eje (0 = gesto limpio, de muñeca suelta)
+const FIRMA_CORTES = 0;    // de 0 a 1: cuántos trazos tienen un saltito donde la tinta no marca
+const FIRMA_REPASO = 0;    // de 0 a 1: cuántos trazos largos llevan una segunda pasada corrida
+const FIRMA_SEGUNDOS = 4.2;// cuánto tarda en escribirse el nombre al abrir
+const FIRMA_SE_VA = [0.04, 0.34];  // pantallas de scroll en las que el croquis de entrada se va
+const FIRMA_TIEMPOS = { trazo: [0, 0.55], color: [0.45, 0.66], letras: [0.62, 1] }; // reparto del tiempo de entrada
+const FIRMA_CAJA = [0.03, 0.9, 0, 1]; // parte del plano que ocupan las letras: de u, a u, de v, a v
+const MESA_VISTA = [-420, 190, 1920, 720];  // encuadre del cierre, en píxeles del croquis de la perspectiva (1080)
+const NOCHE_PAUSA = 1.4;     // pantallas de scroll que Algo Complejo se queda quieta antes de dejar pasar
+const FORMA_MAXIMA = 8;    // cuántas veces crece la mancha antes de que el círculo termine de abrir
+const ZOOM_MAXIMO = 1.9;    // cuánto se acerca el croquis al entrar; más que su resolución lo ablanda
+const T = {                  // tramos de cada obra, de 0 a 1
+  papel: [0, 0.07], trazo: [0.065, 0.33], color: [0.29, 0.41], abrir: [0.44, 0.53],
+  entrar: [0.5, 0.74], fundir: [0.71, 0.74], rotulo: [0.73, 0.79], tira: [0.83, 1],
+};
+
+const ESCENAS = [
+  { croquis: 'cinta', fotos: ['elemento-1'], nombre: 'Casa PC |Elemento|', dato: 'Una cinta que se pliega: el muro de la fachada.', tira: ['elemento-2', 'elemento-4', 'elemento-3', 'elemento-6'], donde: [0, -0.02], rotulo: 'ab-iz',
+    alt: 'Croquis de una cinta amarilla que se pliega', altFoto: 'Fachada de vidrio verde sobre un muro de hormigón que ondula como la cinta del croquis, con una bicicleta apoyada' },
+  { croquis: 'kayak', fotos: ['mirador-pintura', 'mirador-torre'], nombre: 'Mirador en los humedales', dato: '', tira: [], donde: [0.02, 0.03], rotulo: 'ar-iz',
+    alt: 'Croquis de una persona en un kayak amarillo frente a una loma con tres miradores encendidos', altFoto: 'Pintura del humedal visto desde arriba y la torre del mirador sobre el agua, con una persona en la pasarela' },
+  { croquis: 'encuentro', fotos: ['encuentro-noche'], nombre: 'Un lugar de encuentro', dato: 'Para nuestros colegiados.', tira: ['encuentro-patio', 'encuentro-galeria', 'encuentro-axo'], donde: [0, 0.04], rotulo: 'ar-de',
+    alt: 'Croquis de un trazo: la casa vieja, tres planos nuevos, un patio y dos personas', altFoto: 'La casa histórica de noche con el ingreso nuevo iluminado' },
+  { croquis: 'cubierta', vector: true, fotos: ['elementos-loma'], nombre: 'Elementos diversos', dato: 'Masterplan de la Ciudad Universitaria de Rosario. Concurso.', tira: ['elementos-patio', 'elementos-bosque', 'elementos-luces', 'elementos-paseo', 'elementos-maqueta'], donde: [-0.02, 0], rotulo: 'ab-de',
+    alt: 'Croquis de una cubierta inclinada con un canto amarillo y un árbol al lado', altFoto: 'Un edificio de cubierta inclinada que sale de una loma verde' },
+];
+
+const $ = (s, r = document) => r.querySelector(s);
+const crear = (t, cls, attrs = {}) => { const e = document.createElement(t); if (cls) e.className = cls; for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const svg = (t, attrs = {}) => { const e = document.createElementNS('http://www.w3.org/2000/svg', t); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const tramo = (p, [a, b]) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+const suave = t => t * t * (3 - 2 * t);
+
+const escenario = $('#escenario'), recorrido = $('#recorrido'), indice = $('#indice');
+let W = 0, H = 0;
+
+async function armar(e, i) {
+  const C = await fetch(`material/umbral/${e.croquis}.json?v=${VERSION}`).then(r => r.json());
+  const base = `material/umbral/${e.croquis}`;
+  const el = crear('section', 'escena', { 'aria-label': e.nombre });
+  const obra = crear('div', 'obra');
+  e.fotos.forEach(f => obra.append(crear('img', '', { 'data-src': `material/fotos/${f}.jpg`, alt: e.altFoto })));
+  const velo = crear('div', 'velo');
+  obra.append(velo);
+  const papel = crear('div', 'papel');
+  papel.style.setProperty('--hueco', `url(${base}-hueco.svg?v=${VERSION})`);
+  const hoja = crear('div', 'hoja');
+  const ext = e.vector ? 'svg' : 'png';
+  const color = crear('img', '', { src: `${base}-color.${ext}?v=${VERSION}`, alt: '' });
+  const relleno = crear('img', '', { src: `${base}-relleno.${ext}?v=${VERSION}`, alt: '' });
+  const dib = svg('svg', { viewBox: `0 0 ${C.w} ${C.h}`, role: 'img', 'aria-label': e.alt });
+  const mascara = svg('mask', { id: `m${i}`, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: C.w, height: C.h });
+  const trazos = C.trazos.map(d => { const p = svg('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': C.w * TRAZO_ANCHO, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); mascara.append(p); return p; });
+  const tinta = svg('image', { href: `${base}-tinta.${ext}?v=${VERSION}`, width: C.w, height: C.h, mask: `url(#m${i})` });
+  dib.append(mascara, tinta);
+  hoja.append(color);
+  papel.append(hoja);
+  const trazo = crear('div', 'trazo'), hojaTrazo = crear('div', 'hoja');
+  // la mancha del hueco va fuera del papel: adentro, la máscara del propio hueco la borra
+  hojaTrazo.append(relleno, dib);
+  trazo.append(hojaTrazo);
+  const rotulo = crear('div', `rotulo ${e.rotulo}`);
+  rotulo.innerHTML = `<h2>${e.nombre}</h2>${e.dato ? `<p>${e.dato}</p>` : ''}`;
+  const tira = crear('div', 'tira');
+  e.tira.forEach(f => tira.append(crear('img', '', { 'data-src': `material/fotos/${f}.jpg`, alt: '' })));
+  el.append(obra, papel, trazo, rotulo, tira);
+  escenario.append(el);
+
+  let total = 0;
+  const med = trazos.map(p => { const L = p.getTotalLength() || 1; p.style.strokeDasharray = `${L} ${L}`; const ini = total; total += L + C.w * TRAZO_PAUSA; return { p, L, ini }; });
+
+  const boton = crear('button', '', { type: 'button', 'aria-label': e.nombre, title: e.nombre });
+  boton.append(crear('img', '', { src: `${base}-entera.png`, alt: '' }));
+  boton.addEventListener('click', () => window.scrollTo({ top: recorrido.offsetTop + (LARGO_ARCO + i * LARGO_ESCENA + LARGO_ESCENA * T.color[1]) * H, behavior: 'smooth' }));
+  indice.append(boton);
+
+  Object.assign(e, { C, el, obra, velo, trazo, hojaTrazo, papel, hoja, color, relleno, tinta, rotulo, tira, med, total, boton, cargada: false, dibujado: -1 });
+}
+
+function medir() {
+  W = escenario.clientWidth; H = escenario.clientHeight;
+  recorrido.style.height = `${(LARGO_ARCO + ESCENAS.length * LARGO_ESCENA + 1) * H}px`;
+  for (const e of ESCENAS) {
+    if (!e.C) continue;
+    const k = Math.min((W * 0.9) / e.C.w, (H * 0.76) / e.C.h);
+    const bw = e.C.w * k, bh = e.C.h * k;
+    const bx = (W - bw) / 2 + e.donde[0] * W, by = (H - bh) / 2 + e.donde[1] * H;
+    for (const h of [e.hoja, e.hojaTrazo]) Object.assign(h.style, { left: `${bx}px`, top: `${by}px`, width: `${bw}px`, height: `${bh}px` });
+    for (const pre of ['webkitMask', 'mask']) { e.papel.style[`${pre}Size`] = `100% 100%, ${bw}px ${bh}px, 100% 100%`; e.papel.style[`${pre}Position`] = `0 0, ${bx}px ${by}px, 0 0`; }
+    const cx = bx + e.C.centro[0] * bw, cy = by + e.C.centro[1] * bh;
+    for (const capa of [e.papel, e.trazo, e.obra]) capa.style.transformOrigin = `${cx}px ${cy}px`;
+    for (const capa of [e.papel, e.trazo]) { capa.style.setProperty('--cx', `${cx}px`); capa.style.setProperty('--cy', `${cy}px`); }
+    e.zoom = Math.min(ZOOM_MAXIMO, Math.max(1.2, e.C.w / bw));
+    Object.assign(e, { bx, by, bw, bh, cx, cy, forma: -1 });
+    e.r0 = e.C.radio * bw * 0.85;
+    e.lejos = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)) * 1.05;
+  }
+}
+
+function cargar(e) {
+  if (e.cargada) return;
+  e.cargada = true;
+  e.el.querySelectorAll('img[data-src]').forEach(im => { im.src = im.dataset.src; });
+}
+
+function dibujar(e, t) {
+  if (t === e.dibujado) return;
+  e.dibujado = t;
+  if (t >= 1) { e.tinta.removeAttribute('mask'); return; }
+  e.tinta.setAttribute('mask', `url(#m${ESCENAS.indexOf(e)})`);
+  const hecho = t * e.total;
+  for (const { p, L, ini } of e.med) p.style.strokeDashoffset = L - Math.min(L, Math.max(0, hecho - ini));
+}
+
+function pintar(e, p, sigue) {
+  const viva = (p > -0.02 || e === ESCENAS[0]) && (p < 1 || sigue < T.papel[1] + 0.02);
+  e.el.classList.toggle('viva', viva);
+  if (p > -0.35) cargar(e);
+  if (!viva) return;
+  const q = Math.min(1, p);
+  // la obra (tapada por su velo) entra fundida junto con el papel: si no, el hueco muestra la escena anterior y salta
+  const llega = e === ESCENAS[0] ? 1 : suave(tramo(q, T.papel));
+  e.papel.style.opacity = e.trazo.style.opacity = llega * (1 - tramo(q, T.fundir));
+  e.obra.style.opacity = llega;
+  dibujar(e, tramo(q, T.trazo));
+  const c = suave(tramo(q, T.color));
+  e.color.style.opacity = c;
+  e.relleno.style.opacity = c * (1 - suave(tramo(q, T.abrir)));
+  e.velo.style.opacity = 1 - suave(tramo(q, T.abrir));
+  const z = tramo(q, T.entrar);
+  e.papel.style.transform = e.trazo.style.transform = `scale(${1 + (e.zoom - 1) * suave(z)})`;
+  // la mancha misma crece y se traga la hoja; el círculo suave va por dentro y termina de abrir
+  const s = Math.exp(Math.log(FORMA_MAXIMA) * Math.min(1, z / 0.6));
+  if (s !== e.forma) {
+    e.forma = s;
+    const tam = `100% 100%, ${e.bw * s}px ${e.bh * s}px, 100% 100%`;
+    const pos = `0 0, ${e.cx - e.C.centro[0] * e.bw * s}px ${e.cy - e.C.centro[1] * e.bh * s}px, 0 0`;
+    for (const pre of ['webkitMask', 'mask']) { e.papel.style[`${pre}Size`] = tam; e.papel.style[`${pre}Position`] = pos; }
+  }
+  const r = z > 0 ? e.r0 * Math.exp(Math.log(e.lejos / e.r0) * z) * Math.min(1, z * 12) : 0;
+  e.papel.style.setProperty('--r', `${r}px`);
+  e.trazo.style.setProperty('--r', `${r}px`);
+  e.obra.style.transform = `scale(${1.14 - 0.14 * suave(z)})`;
+  const hayTira = e.tira.children.length > 0;
+  e.rotulo.style.opacity = tramo(q, T.rotulo) * (hayTira ? 1 - tramo(q, [T.tira[0] - 0.03, T.tira[0] + 0.01]) : 1);
+  e.obra.classList.toggle('lejos', hayTira && q > T.tira[0] - 0.02);
+  if (hayTira) {
+    const t = tramo(q, T.tira);
+    e.tira.style.visibility = t > 0 ? 'visible' : 'hidden';
+    e.tira.style.transform = `translateX(${W * 0.96 - t * (e.tira.scrollWidth - W * 0.25)}px)`;
+  }
+}
+
+// el nombre se escribe solo al abrir y el scroll lo va recogiendo desde la primera letra
+const firma = { el: $('#firma'), total: 0, visto: '' };
+const azar = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+// las letras se escriben sobre el plano amarillo del croquis de entrada: se proyectan a sus cuatro esquinas
+// las letras van entre el filo de arriba y el de abajo de la franja amarilla, medidos en el croquis mismo
+let franja = null;
+const enPlano = (u, v) => {
+  const x = franja.x0 + (franja.x1 - franja.x0) * u, filo = c => c[0] * x * x + c[1] * x + c[2];
+  const arriba = filo(franja.arriba), abajo = filo(franja.abajo);
+  return { x, y: arriba + (abajo - arriba) * v };
+};
+function proyectar(pts) {
+  // letra de plano: cada trazo toca justo el renglón de arriba y el de abajo, con la línea del propio croquis
+  const [u0, u1, v0, v1] = FIRMA_CAJA, uv = q => [u0 + (u1 - u0) * q.x / 356, v0 + (v1 - v0) * q.y / 100];
+  const fuera = pts.map(q => { const [u, v] = uv(q); return { ...enPlano(u, v), h: q.h }; });
+  fuera.forEach((q, i) => { const a = fuera[Math.max(0, i - 1)], b = fuera[Math.min(fuera.length - 1, i + 1)], d = Math.hypot(b.x - a.x, b.y - a.y) || 1; q.tx = (b.x - a.x) / d; q.ty = (b.y - a.y) / d; });
+  return fuera;
+}
+// cada trazo es una forma llena: entra fino, engorda con el pulso y sale en punta, como la lapicera
+firma.med = [...firma.el.querySelectorAll('.eje')].map((eje, k) => {
+  const L = eje.getTotalLength(), ini = firma.total, pts = [];
+  firma.total += L + 22;
+  const cortes = [];
+  for (let n = 0; n < (L > 60 ? 2 : 1); n++) if (azar(k * 7.7 + n * 13) < FIRMA_CORTES) cortes.push([L * (0.2 + 0.65 * azar(k * 1.9 + n * 4.1)), 0.5 + 0.9 * azar(k + n * 2.7)]);
+  for (let s = 0; s <= L; s += 1) {
+    const a = eje.getPointAtLength(Math.max(0, s - 0.6)), b = eje.getPointAtLength(Math.min(L, s + 0.6)), c = eje.getPointAtLength(s);
+    const d = Math.hypot(b.x - a.x, b.y - a.y) || 1, tx = (b.x - a.x) / d, ty = (b.y - a.y) / d;
+    // birome: temblor chico y parejo, gota al apoyar, tinta que afloja y a veces se corta un instante
+    const g0 = Math.floor(s / 9), f = suave(s / 9 - g0), temblor = FIRMA_TEMBLOR * ((azar(k * 31 + g0) - 0.5) * (1 - f) + (azar(k * 31 + g0 + 1) - 0.5) * f) * 2;
+    // la línea del croquis no es pareja: engorda y afina de a poco, y sale apenas más fina
+    // donde apoya deja una gota; donde levanta, la línea se afina en punta porque la mano ya se iba
+    const gota = 1 + FIRMA_APOYO * Math.max(0, 1 - s / 3.5) ** 2, sale = 0.25 + 0.75 * Math.min(1, (L - s) / FIRMA_SALIDA) ** 0.8;
+    let tinta = 1 + FIRMA_PULSO * Math.sin(s * 0.05 + k * 2.3);
+    for (const [centro, medio] of cortes) { const d = Math.abs(s - centro); tinta *= d < medio ? 0 : Math.min(1, 0.45 + 0.55 * (d - medio) / 5); }
+    pts.push({ x: c.x - ty * temblor, y: c.y + tx * temblor, tx, ty, h: FIRMA_GROSOR / 2 * gota * sale * tinta });
+  }
+  const p = svg('path', { class: 'pluma' });
+  eje.after(p);
+  const hechos = [{ p, L, ini, pts }];
+  // un trazo de cada tres está repasado: una segunda pasada fina, corrida, que no calza del todo
+  if (L > 60 && azar(k * 5.3) < FIRMA_REPASO) {
+    const a = L * (0.12 + 0.2 * azar(k * 9.1)), b = L * (0.6 + 0.3 * azar(k * 3.3)), lado = azar(k * 2.2) < 0.5 ? -1 : 1;
+    const corrido = pts.map((q, i) => ({ ...q, x: q.x - q.ty * lado * (0.7 + 1.5 * (i - a) / (b - a)), y: q.y + q.tx * lado * (0.7 + 1.5 * (i - a) / (b - a)), h: i > a && i < b ? q.h * 0.62 : 0 }));
+    const p2 = svg('path', { class: 'pluma', opacity: 0.85 });
+    eje.after(p2);
+    hechos.push({ p: p2, L, ini, pts: corrido, repaso: true });
+  }
+  hechos.forEach(hecho => { hecho.crudo = hecho.pts; hecho.pts = []; });
+  return hechos;
+}).flat();
+// las fugas entran primero; el amarillo, cuando el contorno del plano ya está y antes de la primera letra
+firma.capas = [[$('#entrada-color'), FIRMA_TIEMPOS.color[0], FIRMA_TIEMPOS.color[1]]];
+firma.capas[0][0].style.opacity = 0;
+// el croquis de la nave se traza con sus propios trazos como máscara, igual que los de las obras
+firma.trazos = [];
+fetch(`material/umbral/nave.json?v=${VERSION}`).then(r => r.json()).then(C => {
+  let total = 0;
+  firma.trazos = C.trazos.map(d => { const p = svg('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': C.w * TRAZO_ANCHO, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); $('#entrada-trazo').append(p); const L = p.getTotalLength() || 1; p.style.strokeDasharray = `${L} ${L}`; p.style.strokeDashoffset = L; const ini = total; total += L + C.w * TRAZO_PAUSA; return { p, L, ini }; });
+  firma.largoTrazos = total;
+  franja = C.franja;
+  for (const l of firma.med) l.pts = proyectar(l.crudo);
+  firma.visto = '';
+});
+function pluma(pts, i0, i1) {
+  let d = '';
+  for (let a = i0; a <= i1; a++) {
+    if (pts[a].h <= 0) continue;
+    let b = a;
+    while (b < i1 && pts[b + 1].h > 0) b++;
+    d += tramoPluma(pts, a, b);
+    a = b;
+  }
+  return d;
+}
+function tramoPluma(pts, i0, i1) {
+  if (i1 - i0 < 2) return '';
+  const izq = [], der = [];
+  for (let i = i0; i <= i1; i++) { const q = pts[i]; izq.push(`${(q.x - q.ty * q.h).toFixed(2)} ${(q.y + q.tx * q.h).toFixed(2)}`); der.push(`${(q.x + q.ty * q.h).toFixed(2)} ${(q.y - q.tx * q.h).toFixed(2)}`); }
+  const fin = pts[i1], pico = `${(fin.x + fin.tx * fin.h * 1.5).toFixed(2)} ${(fin.y + fin.ty * fin.h * 1.5).toFixed(2)}`;
+  const com = pts[i0], cola = `${(com.x - com.tx * com.h * 1.5).toFixed(2)} ${(com.y - com.ty * com.h * 1.5).toFixed(2)}`;
+  return `M${izq.join('L')}Q${pico} ${der[der.length - 1]}L${der.reverse().join('L')}Q${cola} ${izq[0]}Z`;
+}
+function firmar(pantallas) {
+  const escrito = Math.min(1, (performance.now() - 350) / (FIRMA_SEGUNDOS * 1000));
+  const t = escrito <= 0 ? 0 : 1 - Math.pow(1 - escrito, 2), u = suave(tramo(pantallas, FIRMA_SE_VA));
+  const clave = `${t.toFixed(4)}|${u.toFixed(3)}`;
+  if (clave === firma.visto) return;
+  firma.visto = clave;
+  firma.el.style.visibility = u >= 1 ? 'hidden' : 'visible';
+  firma.el.style.opacity = 1 - u;
+  firma.el.style.transform = `scale(${1 + 0.06 * u})`;
+  const letra = tramo(t, FIRMA_TIEMPOS.letras), hecho = tramo(t, FIRMA_TIEMPOS.trazo) * (firma.largoTrazos || 0);
+  for (const { p, L, ini } of firma.trazos) p.style.strokeDashoffset = L - Math.min(L, Math.max(0, hecho - ini));
+  // la máscara no cubre las líneas más finas: al terminar de trazar se muestra la tinta entera
+  if (firma.largoTrazos) $('#entrada-tinta').setAttribute('mask', t >= FIRMA_TIEMPOS.trazo[1] ? 'none' : 'url(#entrada-trazo)');
+  for (const l of firma.med) l.p.setAttribute('d', pluma(l.pts, 0, Math.min(l.pts.length - 1, Math.floor(Math.min(l.L, Math.max(0, letra * firma.total - l.ini))))));
+  for (const [capa, desde, hasta] of firma.capas) capa.style.opacity = suave(tramo(t, [desde, hasta]));
+}
+
+// cierre: el dibujo original, con sus fugas y su franja prolongadas más allá de la hoja
+const MESA = [];
+async function armarMesa(fig) {
+  const C = await fetch('material/umbral/interior-vector.json').then(r => r.json());
+  const [x0, y0, ancho, alto] = MESA_VISTA;
+  const dib = svg('svg', { viewBox: `${x0} ${y0} ${ancho} ${alto}`, preserveAspectRatio: 'xMidYMid slice', role: 'img', 'aria-label': fig.dataset.alt });
+  const mantos = C.mantos.map(m => { const p = svg('path', { d: m.d, class: 'manto' }); p.style.fill = m.c; dib.append(p); return p; });
+  const fugas = C.fugas.map(f => { const p = svg('path', { d: f.d, 'stroke-width': f.g, opacity: f.o, pathLength: 1 }); p.style.strokeDasharray = '1 1'; dib.append(p); return p; });
+  dib.append(svg('image', { href: 'material/umbral/interior-vector-dibujo.png', width: C.w, height: C.h }));
+  fig.append(dib);
+  MESA.push({ fig, mantos, fugas, visto: -1 });
+}
+function pintarMesa() {
+  for (const m of MESA) {
+    const r = m.fig.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > H) continue;
+    const t = suave(tramo((H - r.top) / H, [0.3, 1.05]));
+    if (t === m.visto) continue;
+    m.visto = t;
+    m.fugas.forEach(p => { p.style.strokeDashoffset = 1 - t; });
+    m.mantos.forEach(p => { p.style.opacity = Math.min(1, t * 1.6); });
+  }
+}
+
+// la luz sigue al cursor; sin cursor (o en el teléfono) pasea sola alrededor de la cáscara
+const pausa = $('#pausa');
+pausa.style.height = `${(1 + NOCHE_PAUSA) * 100}vh`;
+const noche = { el: $('#noche'), x: 0.5, y: 0.42, px: null, py: null, ultimo: -1e9 };
+noche.el.addEventListener('pointermove', ev => { if (ev.pointerType === 'touch') return; const r = noche.el.getBoundingClientRect(); noche.px = (ev.clientX - r.left) / r.width; noche.py = (ev.clientY - r.top) / r.height; noche.ultimo = performance.now(); });
+function pintarNoche() {
+  const r = noche.el.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > H) return;
+  const t = performance.now() / 1000, solo = performance.now() - noche.ultimo > 2500;
+  const mx = solo ? 0.5 + 0.24 * Math.sin(t * 0.45) : noche.px, my = solo ? 0.42 + 0.13 * Math.sin(t * 0.7 + 1) : noche.py;
+  noche.x += (mx - noche.x) * 0.06; noche.y += (my - noche.y) * 0.06;
+  const caja = pausa.getBoundingClientRect(), quieto = tramo(-caja.top / Math.max(1, caja.height - H), [0, 1]);
+  const radio = Math.min(r.width, r.height) * (0.3 + 0.22 * suave(quieto) + 0.02 * Math.sin(t * 1.3));
+  noche.el.style.setProperty('--mx', `${noche.x * r.width}px`);
+  noche.el.style.setProperty('--my', `${noche.y * r.height}px`);
+  noche.el.style.setProperty('--rl', `${radio}px`);
+  noche.el.style.setProperty('--lx', `${Math.min(r.width - 170, Math.max(170, noche.x * r.width))}px`);
+  noche.el.style.setProperty('--ly', `${Math.min(r.height - 110, noche.y * r.height + radio * 0.42)}px`);
+}
+
+let actual = 0;
+function cuadro() {
+  const meta = (window.scrollY - recorrido.offsetTop) / H;
+  actual += (meta - actual) * SUAVIDAD;
+  if (Math.abs(meta - actual) < 0.0005) actual = meta;
+  firmar(actual);
+  pintarMesa();
+  pintarNoche();
+  const ps = ESCENAS.map((e, i) => (actual - LARGO_ARCO - i * LARGO_ESCENA) / LARGO_ESCENA);
+  ESCENAS.forEach((e, i) => { if (e.C) { pintar(e, ps[i], i + 1 < ps.length ? ps[i + 1] : -1); e.boton.setAttribute('aria-current', ps[i] >= 0 && ps[i] < 1); } });
+  indice.classList.toggle('visible', meta < ESCENAS.length * LARGO_ESCENA + 0.4);
+  requestAnimationFrame(cuadro);
+}
+
+(async () => {
+  for (let i = 0; i < ESCENAS.length; i++) await armar(ESCENAS[i], i);
+  medir();
+  addEventListener('resize', medir);
+  armarMesa($('#mesa'));
+  actual = (window.scrollY - recorrido.offsetTop) / H;
+  requestAnimationFrame(cuadro);
+})();
+</script>
+</body>
+</html>
